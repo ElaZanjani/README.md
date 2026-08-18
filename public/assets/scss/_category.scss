@@ -1,0 +1,70 @@
+.category {
+    position: relative;
+    background-size: cover;
+    background-position: center center;
+    color: white;
+    width: 100%;
+    border: none;
+    padding: 24px;
+    outline: 0 !important;
+
+    .overlay {
+        background: #00000088;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+    }
+
+    .content {
+        position: relative;
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1;
+
+        .category-icon {
+            font-size: 24px;
+            transform: translateX(-12px);
+            transition: transform .1s ease;
+        }
+    }
+
+    &:active {
+        border: none;
+    }
+
+    &[class~=active] {
+        .content {
+            .category-icon {
+                transform: translateX(0);
+            }
+        }
+    }
+}
+
+.category-back {
+    width: 100%;
+    padding: 8px;
+    background: $color-template-primary;
+    outline: 0 !important;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    & > div {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    span {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+}

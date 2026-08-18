@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Yönetim Merkezi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { brandGreen: '#047857', brandGold: '#D4AF37', brandDark: '#022C22', brandBg: '#F8FAFC' },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brandBg font-sans text-brandDark min-h-screen flex relative overflow-x-hidden">
+
+    <div id="admin-toast-container" class="fixed top-5 right-5 z-[300] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- LOGIN EKRANI -->
+    <div id="login-screen" class="fixed inset-0 z-[200] bg-brandBg flex items-center justify-center">
+        <div class="bg-white p-10 md:p-14 rounded-2xl shadow-2xl border-t-4 border-brandGreen w-full max-w-md flex flex-col items-center relative">
+            <h1 class="text-4xl font-serif font-bold text-brandDark tracking-widest uppercase mb-1">CENTER</h1>
+            <p class="text-xs font-bold text-gray-400 tracking-[0.2em] uppercase mb-10">SİSTEM YÖNETİMİ</p>
+
+            <form class="w-full flex flex-col gap-6" onsubmit="event.preventDefault(); sistemeGirisYap();">
+                <div>
+                    <label class="block text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mb-2">E-Posta Adresi</label>
+                    <input type="email" id="login-email" class="w-full bg-transparent border-b-2 border-gray-200 px-2 py-2 text-sm focus:border-brandGreen focus:outline-none transition-colors" placeholder="admin@centercafe.com" required>
+                </div>
+
+                <div>
+                    <label class="block text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mb-2">Şifre</label>
+                    <input type="password" id="login-pass" class="w-full bg-transparent border-b-2 border-gray-200 px-2 py-2 text-sm focus:border-brandGreen focus:outline-none transition-colors" placeholder="••••••••" required>
+                </div>
+
+                <div class="flex items-center gap-2 mt-2">
+                    <input type="checkbox" id="login-dev" class="w-4 h-4 text-brandGreen bg-gray-100 border-gray-300 rounded focus:ring-brandGreen cursor-pointer">
+                    <label for="login-dev" class="text-xs font-medium text-gray-500 cursor-pointer">Geliştirici Girişi</label>
+                </div>
+
+                <button type="submit" class="w-full bg-brandGreen text-white py-3.5 rounded-lg font-bold uppercase tracking-widest text-sm hover:bg-brandDark transition-colors shadow-md mt-4 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Giriş Yap
+                </button>
+            </form>
+            <p id="login-error" class="text-xs text-red-500 font-bold text-center mt-4 hidden">Giriş bilgileri hatalı!</p>
+        </div>
+    </div>
+
+    <!-- ANA YÖNETİM PANELİ -->
+    <div id="app-content" class="w-full flex hidden">
+        <aside class="w-64 bg-brandDark text-white flex flex-col hidden md:flex fixed h-full z-50">
+            <div class="p-6 border-b border-white/10 flex items-center gap-3">
+                <i class="fa-solid fa-shield-halved text-brandGold text-2xl"></i>
+                <div>
+                    <h2 class="font-bold tracking-widest uppercase text-sm">Yönetim</h2>
+                    <p class="text-[0.65rem] text-gray-400">Center Cafe v2.0</p>
+                </div>
+            </div>
+            <nav class="flex-1 p-4 flex flex-col gap-2">
+                <button onclick="switchAdmin('dashboard')" id="btn-dashboard" class="admin-tab w-full flex items-center gap-3 px-4 py-3 bg-brandGreen rounded-xl text-sm font-bold transition-all"><i class="fa-solid fa-chart-pie w-5"></i> Özet</button>
+                <button onclick="switchAdmin('kategoriler')" id="btn-kategoriler" class="admin-tab w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-sm font-medium transition-all text-gray-300"><i class="fa-solid fa-layer-group w-5"></i> Kategoriler</button>
+                <button onclick="switchAdmin('urunler')" id="btn-urunler" class="admin-tab w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-sm font-medium transition-all text-gray-300"><i class="fa-solid fa-burger w-5"></i> Ürün Yönetimi</button>
+                <button onclick="switchAdmin('kasa')" id="btn-kasa" class="admin-tab w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-sm font-medium transition-all text-gray-300"><i class="fa-solid fa-cash-register w-5"></i> Kasa & Masalar</button>
+                <button onclick="switchAdmin('qrs')" id="btn-qrs" class="admin-tab w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-sm font-medium transition-all text-gray-300"><i class="fa-solid fa-qrcode w-5"></i> QR Kodlar</button>
+                <button onclick="switchAdmin('raporlar')" id="btn-raporlar" class="admin-tab w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-sm font-medium transition-all text-gray-300"><i class="fa-solid fa-chart-line w-5"></i> Satış Analizi</button>
+                <button onclick="switchAdmin('ayarlar')" id="btn-ayarlar" class="admin-tab w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl text-sm font-medium transition-all text-gray-300"><i class="fa-solid fa-sliders w-5"></i> Site Ayarları</button>
+            </nav>
+            <div class="p-4 border-t border-white/10 flex flex-col gap-2">
+                <button onclick="sistemdenCikisYap()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-power-off"></i> Çıkış Yap</button>
+                <a href="/" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-brandGold rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-arrow-right-from-bracket"></i> Siteye Dön</a>
+            </div>
+        </aside>
+
+        <main class="flex-1 md:ml-64 p-6 md:p-10">
+            <header class="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
+                <div>
+                    <h1 id="page-title" class="text-3xl font-bold text-brandDark">Hoş Geldiniz</h1>
+                    <p class="text-sm text-gray-500 mt-1">Sistem verilerini buradan yönetebilirsiniz.</p>
+                </div>
+                <!-- Canlı Mutfak & Garson Bildirim Butonu -->
+                <button onclick="toggleAdminPanel()" class="bg-brandDark text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brandGreen transition-all flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-bell"></i> Canlı Bildirimler (<span id="admin-bildirim-sayisi">0</span>)
+                </button>
+            </header>
+
+            <!-- Canlı Mutfak & Garson Paneli Çekmecesi -->
+            <div id="admin-live-panel" class="fixed top-6 right-6 bg-white rounded-3xl p-5 shadow-2xl border-2 border-brandGreen/30 z-[400] w-80 md:w-96 max-h-[80vh] flex flex-col hidden">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                        <h3 class="font-serif font-bold text-brandDark uppercase tracking-wide text-sm">Canlı Mutfak & Garson</h3>
+                    </div>
+                    <button onclick="toggleAdminPanel()" class="text-gray-400 hover:text-red-500 w-7 h-7 flex items-center justify-center rounded-full bg-gray-50"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="overflow-y-auto flex-1 flex flex-col gap-3" id="admin-notifications-container">
+                    <!-- Bildirimler buraya dolacak -->
+                </div>
+            </div>
+
+            <!-- DASHBOARD (ÖZET & PERFORMANS LOGLAMA) -->
+            <section id="sec-dashboard" class="hidden flex-col gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+                        <div class="w-16 h-16 rounded-full bg-brandGold/10 text-brandGold flex items-center justify-center text-2xl mb-4"><i class="fa-solid fa-stopwatch"></i></div>
+                        <h3 class="font-bold text-brandDark text-lg mb-1">Ortalama Yanıt Süresi</h3>
+                        <p class="text-xs text-gray-500 mb-3">Garson çağrılarına verilen yanıt hızı</p>
+                        <span id="stat-yanit-suresi" class="text-3xl font-black text-brandGreen">Hesaplanıyor...</span>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-brandDark text-lg mb-4 border-b pb-2">Son Garson Logları</h3>
+                        <div id="log-listesi" class="flex flex-col gap-3 max-h-48 overflow-y-auto hide-scroll">
+                            <span class="text-sm text-gray-400 italic">Henüz kaydedilen çağrı yok.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-kategoriler" class="hidden flex-col gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-lg mb-4"><i class="fa-solid fa-layer-group text-brandGold mr-2"></i> Kategori Yönetimi</h3>
+                    <p class="text-sm text-gray-500">Gelişmiş kategori modülü daha sonra eklenecek.</p>
+                </div>
+            </section>
+
+            <section id="sec-urunler" class="hidden flex-col gap-6">
+                <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-lg"><i class="fa-solid fa-burger text-brandGold mr-2"></i> Ürün Listesi ve Ekleme</h3>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 id="form-baslik" class="font-bold mb-4 border-b pb-2">Yeni Yemek / İçecek Ekle</h4>
+                    <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" onsubmit="event.preventDefault();">
+                        <input type="hidden" id="input-urun-id">
+
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ürün Adı</label>
+                            <input type="text" id="input-urun-ad" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none">
+                        </div>
+
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ana Kategori</label>
+                            <select id="input-urun-kat" onchange="updateAltKategori()" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none">
+                                <option value="">Seçiniz...</option>
+                                <option value="KAHVALTILAR">KAHVALTILAR</option>
+                                <option value="TATLILAR">TATLILAR</option>
+                                <option value="SICAK İÇECEKLER">SICAK İÇECEKLER</option>
+                                <option value="SOĞUK İÇECEKLER">SOĞUK İÇECEKLER</option>
+                                <option value="DONDURMALAR">DONDURMALAR</option>
+                                <option value="GÖZLEME & TOST">GÖZLEME & TOST</option>
+                                <option value="YENI" class="font-bold text-brandGreen">+ YENİ KATEGORİ EKLE</option>
+                            </select>
+                            <div id="wrapper-yeni-kat" class="hidden mt-2">
+                                <input type="text" id="input-yeni-kat" class="w-full bg-white border border-brandGreen rounded-lg px-3 py-2 text-sm placeholder-brandGreen/50" placeholder="Yeni kategori ad...">
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Alt Kategori</label>
+                            <select id="input-urun-alt-kat" onchange="checkYeniAltKategori()" disabled class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:border-brandGreen focus:outline-none">
+                                <option value="">Önce kategori seçin</option>
+                            </select>
+                            <div id="wrapper-yeni-alt-kat" class="hidden mt-2">
+                                <input type="text" id="input-yeni-alt-kat" class="w-full bg-white border border-brandGreen rounded-lg px-3 py-2 text-sm placeholder-brandGreen/50" placeholder="Yeni alt kategori ad...">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fiyat (₺)</label>
+                            <input type="number" id="input-urun-fiyat" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kalori (Kcal)</label>
+                            <input type="number" id="input-urun-kalori" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hazırlanma Süresi (Dk)</label>
+                            <input type="number" id="input-urun-sure" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sıralama (Sıra No)</label>
+                            <input type="number" id="input-urun-sira" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none" placeholder="Otomatik">
+                        </div>
+
+                        <div class="lg:col-span-4">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ürün İçeriği / Açıklaması</label>
+                            <textarea id="input-urun-aciklama" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none resize-none"></textarea>
+                        </div>
+
+                        <div class="lg:col-span-4">
+                            <label class="block text-xs font-bold text-red-600 uppercase mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Alerjen Bilgisi / Uyarı Metni</label>
+                            <input type="text" id="input-urun-alerjen" placeholder="Örn: Bu ürün süt ve fındık içerir." class="w-full bg-red-50/50 border border-red-200 rounded-lg px-3 py-2 text-sm focus:border-red-500 focus:outline-none text-red-700">
+                        </div>
+
+                        <div class="lg:col-span-3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ürün Görseli Seç</label>
+                            <input type="file" id="input-urun-resim" accept="image/*" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brandGreen file:text-white hover:file:bg-brandDark cursor-pointer">
+                        </div>
+                        <div class="flex flex-col justify-center items-center bg-gray-50 border border-gray-200 rounded-lg p-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Glütensiz Seçeneği</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="input-urun-gluten" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brandGreen"></div>
+                                <span class="ml-3 text-sm font-bold text-brandDark">Glütensiz</span>
+                            </label>
+                        </div>
+
+                        <div class="lg:col-span-4 flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                            <button type="button" id="btn-iptal" onclick="formuSifirla()" class="hidden bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-gray-400 transition-colors">İptal</button>
+                            <button type="button" onclick="urunKaydetVEYAGuncelle()" class="bg-brandGreen text-white px-10 py-3 rounded-lg font-bold hover:bg-brandDark transition-colors shadow-md flex items-center gap-2 ml-auto">
+                                <i class="fa-solid fa-check"></i> <span id="btn-metin">Ürünü Sisteme Ekle</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 border-b pb-4 gap-4">
+                        <h4 class="font-bold text-lg">Kayıtlı Ürünler Listesi</h4>
+                        <div class="w-full md:w-72 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 flex items-center">
+                            <i class="fa-solid fa-search text-gray-400 mr-2 text-sm"></i>
+                            <input type="text" id="admin-urun-arama" placeholder="Ürün adı veya sıra no..." oninput="adminUrunleriFiltrele()" class="w-full bg-transparent outline-none text-sm font-medium">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                                    <th class="p-3">Sıra</th>
+                                    <th class="p-3">Görsel</th>
+                                    <th class="p-3">Ürün Adı</th>
+                                    <th class="p-3">Kategori</th>
+                                    <th class="p-3">Fiyat</th>
+                                    <th class="p-3 text-center">Stok Durumu</th>
+                                    <th class="p-3 text-center">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-urun-listesi" class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KASA & MASALAR -->
+            <section id="sec-kasa" class="hidden flex-col gap-6">
+                <div class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-lg"><i class="fa-solid fa-chair text-brandGold mr-2"></i> Kasa & Masa Yönetimi</h3>
+                    <div class="flex gap-2">
+                        <button onclick="gunSonuAl()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-600 transition-colors shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-power-off"></i> Gün Sonu Al
+                        </button>
+                        <button onclick="masaEkleModalAc()" class="bg-brandGreen text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-brandDark transition-colors shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Yeni Masa Ekle
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-brandGreen/10 text-brandGreen flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-chair"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Toplam Masa</p>
+                            <h4 id="stat-toplam-masa" class="text-2xl font-black text-brandDark mt-1">0</h4>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-utensils"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Dolu / Aktif Masa</p>
+                            <h4 id="stat-dolu-masa" class="text-2xl font-black text-brandDark mt-1">0</h4>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-brandGold/10 text-brandGold flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-cash-register"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Günlük Kasa Ciro</p>
+                            <h4 id="stat-ciro" class="text-2xl font-black text-brandDark mt-1">₺0.00</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h4 class="font-bold mb-4 border-b pb-2 text-sm text-gray-600 uppercase tracking-wide">Masa Durum Takibi</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="masa-grid"></div>
+                </div>
+            </section>
+
+            <!-- QR KODLAR -->
+            <section id="sec-qrs" class="hidden flex-col gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-qrcode text-brandGold mr-2"></i> Masa QR Kod Bağlantıları</h3>
+                    <p class="text-sm text-gray-500 mb-6">Masaların akıllı menüye bağlanması için gereken dinamik URL ve QR kod listesidir. Test etmek için "Masaya Git" butonunu kullanabilirsiniz.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="qr-liste-grid"></div>
+                </div>
+            </section>
+
+            <!-- SATIŞ ANALİZİ (RAPORLAR & ADİSYON FİŞİ) -->
+            <section id="sec-raporlar" class="hidden flex-col gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-lg"><i class="fa-solid fa-chart-line text-brandGold mr-2"></i> Gün Sonu Ürün ve Masa Satış Raporu</h3>
+                        <button onclick="raporuGuncelle()" class="bg-brandGreen text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-brandDark transition-colors">
+                            <i class="fa-solid fa-rotate"></i> Yenile
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                                    <th class="p-3">Masa / İşlem</th>
+                                    <th class="p-3">Ödeme Türü</th>
+                                    <th class="p-3 text-center">İşlem Adedi</th>
+                                    <th class="p-3">Toplam Tutar</th>
+                                    <th class="p-3">Zaman</th>
+                                    <th class="p-3 text-center">Adisyon</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rapor-tablosu" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AYARLAR -->
+            <section id="sec-ayarlar" class="hidden flex-col gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-2xl">
+                    <h3 class="font-bold text-lg mb-6"><i class="fa-solid fa-sliders text-brandGold mr-2"></i> Kurumsal Ayarlar (White-Label)</h3>
+                    <form id="ayarForm" onsubmit="event.preventDefault(); ayarKaydet();" class="flex flex-col gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">İşletme (Şirket) Adı</label>
+                            <input type="text" id="input-sirket-adi" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Wi-Fi Şifresi</label>
+                            <input type="text" id="input-wifi" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Telefon Numarası</label>
+                            <input type="text" id="input-telefon" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Adres</label>
+                            <input type="text" id="input-adres" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Google Yorum Linki</label>
+                            <input type="text" id="input-yorum-link" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                        </div>
+                        <button type="submit" class="bg-brandGold text-white px-6 py-3 rounded-lg font-bold mt-2 self-start hover:bg-brandGreen transition-colors shadow-md">Değişiklikleri Kaydet</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- YENİ EKLENEN: ADİSYON FİŞİ MODALI -->
+    <div id="receipt-modal" class="fixed inset-0 z-[500] bg-brandDark/80 hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-gray-100 rounded-lg p-6 w-full max-w-sm relative shadow-2xl slide-up flex flex-col items-center">
+            <button onclick="closeReceiptModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full"><i class="fa-solid fa-xmark text-lg"></i></button>
+
+            <!-- Fiş Kağıdı Tasarımı -->
+            <div class="bg-white w-full p-6 shadow-md border-t-4 border-b-4 border-dashed border-gray-300 font-mono text-sm text-gray-700 mt-4 relative">
+                <div class="text-center mb-4">
+                    <h2 class="text-xl font-bold text-black uppercase" id="receipt-title">CENTER CAFE</h2>
+                    <p class="text-xs">Lezzetin Merkezi</p>
+                    <p class="text-xs mt-1" id="receipt-date">Tarih: --</p>
+                    <p class="text-xs" id="receipt-time">Saat: --</p>
+                </div>
+                <div class="border-b border-dashed border-gray-400 mb-4"></div>
+                <div class="flex justify-between font-bold text-black mb-2 uppercase text-lg">
+                    <span>Masa:</span>
+                    <span id="receipt-masa">--</span>
+                </div>
+                <div class="border-b border-dashed border-gray-400 mb-4"></div>
+                
+                <div class="flex justify-between items-center text-lg font-bold text-black mb-1">
+                    <span>TOPLAM:</span>
+                    <span id="receipt-total">₺0.00</span>
+                </div>
+                <div class="flex justify-between items-center text-xs mb-4 font-bold text-gray-500 uppercase tracking-widest">
+                    <span>Ödeme Türü:</span>
+                    <span id="receipt-type">Nakit</span>
+                </div>
+                
+                <div class="border-b border-dashed border-gray-400 mb-4"></div>
+                <div class="text-center text-xs">
+                    <p>Bizi tercih ettiğiniz için</p>
+                    <p>teşekkür ederiz.</p>
+                    <p class="mt-2 font-bold text-black">*** MALİ DEĞERİ YOKTUR ***</p>
+                </div>
+            </div>
+
+            <button onclick="printReceipt()" class="w-full bg-brandDark text-white py-3 rounded-xl font-bold uppercase tracking-widest text-sm hover:bg-brandGreen transition-colors shadow-lg mt-6 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-print"></i> Yazdır & Kapat
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function checkLoginState() {
+            const token = localStorage.getItem('center_admin_token');
+            if (token) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                baslangicVerileriniYukle();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+            }
+        }
+        function sistemeGirisYap() {
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            const isDev = document.getElementById('login-dev').checked;
+            const errorMsg = document.getElementById('login-error');
+            if (isDev) {
+                errorMsg.classList.add('hidden');
+                const fakeToken = "Bearer " + btoa("dev@centercafe.com:" + Date.now());
+                localStorage.setItem('center_admin_token', fakeToken);
+                checkLoginState(); return;
+            }
+            if(email === 'admin@centercafe.com' && pass === 'Center2026') {
+                errorMsg.classList.add('hidden');
+                const fakeToken = "Bearer " + btoa(email + ":" + Date.now());
+                localStorage.setItem('center_admin_token', fakeToken);
+                checkLoginState();
+            } else {
+                errorMsg.textContent = "E-posta adresi veya şifre hatalı!";
+                errorMsg.classList.remove('hidden');
+            }
+        }
+        function sistemdenCikisYap() {
+            localStorage.removeItem('center_admin_token');
+            checkLoginState();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginState();
+            garsonCagrilariniDinle();
+        });
+        let adminUrunlerDizisi = [];
+        const kategoriHiyerarsisi = {
+            "KAHVALTILAR": ["KAHVALTILAR", "SAHANDA", "OMLET", "KENDİ KAHVALTINI YARAT"],
+            "TATLILAR": ["TATLILAR", "SÜTLÜ TATLI", "PASTALAR", "ŞERBETLİ TATLI", "KİLOLUK ÜRÜNLER", "KEKLER", "İLAVELER"],
+            "SICAK İÇECEKLER": ["SICAK İÇECEKLER", "DÜNYA KAHVELERİ", "BİTKİ ÇAYI", "İLAVELER"],
+            "SOĞUK İÇECEKLER": ["SOĞUK İÇECEKLER", "SOĞUK KAHVELER", "MEŞRUBATLAR", "FROZEN", "SMOOTHİE", "MILKSHAKE", "FRAPPE", "KOKTEYL & DETOX"],
+            "DONDURMALAR": ["DONDURMALAR"],
+            "GÖZLEME & TOST": ["GÖZLEME & TOST", "GÖZLEMELER", "TOSTLAR", "KÖYLÜM (BAZLAMA) TOSTLAR", "KÖY EKMEĞİ TOSTLAR", "APERATİFLER"]
+        };
+        function getAuthHeaders() {
+            return {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Authorization': localStorage.getItem('center_admin_token') || ''
+            };
+        }
+        function baslangicVerileriniYukle() {
+            switchAdmin('urunler');
+            urunleriListele();
+            renderMasalar();
+            raporuGuncelle();
+            qrKodlariListele();
+            renderAdminNotifications();
+            performansLoglariniGuncelle();
+            fetch('/api/ayarlar', { headers: getAuthHeaders() }).then(res => res.json()).then(data => {
+                if(data) {
+                    if(document.getElementById('input-sirket-adi')) document.getElementById('input-sirket-adi').value = data.sirket_adi || '';
+                    if(document.getElementById('input-wifi')) document.getElementById('input-wifi').value = data.wifi_sifresi || '';
+                    if(document.getElementById('input-telefon')) document.getElementById('input-telefon').value = data.telefon || '';
+                    if(document.getElementById('input-adres')) document.getElementById('input-adres').value = data.adres || '';
+                    if(document.getElementById('input-yorum-link')) document.getElementById('input-yorum-link').value = data.yorum_linki || '';
+                }
+            });
+        }
+        function updateAltKategori() {
+            const anaKat = document.getElementById('input-urun-kat').value;
+            const altKatSelect = document.getElementById('input-urun-alt-kat');
+            const yeniKatWrapper = document.getElementById('wrapper-yeni-kat');
+            const yeniAltKatWrapper = document.getElementById('wrapper-yeni-alt-kat');
+            altKatSelect.innerHTML = '';
+            yeniAltKatWrapper.classList.add('hidden');
+            if (anaKat === 'YENI') {
+                yeniKatWrapper.classList.remove('hidden');
+                altKatSelect.disabled = true;
+                altKatSelect.innerHTML = '<option value="">Önce ana kategori adını belirleyin</option>';
+            } else if (anaKat && kategoriHiyerarsisi[anaKat]) {
+                yeniKatWrapper.classList.add('hidden');
+                altKatSelect.disabled = false;
+                kategoriHiyerarsisi[anaKat].forEach(alt => {
+                    const option = document.createElement('option');
+                    option.value = alt;
+                    option.textContent = alt;
+                    altKatSelect.appendChild(option);
+                });
+                const yeniAltOption = document.createElement('option');
+                yeniAltOption.value = 'YENI';
+                yeniAltOption.className = 'font-bold text-brandGreen';
+                yeniAltOption.textContent = '+ YENİ ALT KATEGORİ EKLE';
+                altKatSelect.appendChild(yeniAltOption);
+            } else {
+                yeniKatWrapper.classList.add('hidden');
+                altKatSelect.disabled = true;
+                altKatSelect.innerHTML = '<option value="">Önce kategori seçin</option>';
+            }
+        }
+        function checkYeniAltKategori() {
+            const altKat = document.getElementById('input-urun-alt-kat').value;
+            const yeniAltKatWrapper = document.getElementById('wrapper-yeni-alt-kat');
+            if (altKat === 'YENI') yeniAltKatWrapper.classList.remove('hidden');
+            else yeniAltKatWrapper.classList.add('hidden');
+        }
+        function urunleriListele() {
+            fetch('/api/menu', { headers: getAuthHeaders() })
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.urunler) {
+                    adminUrunlerDizisi = data.urunler;
+                    tabloyuDoldur(adminUrunlerDizisi);
+                }
+            });
+        }
+        function tabloyuDoldur(liste) {
+            const tbody = document.getElementById('admin-urun-listesi');
+            tbody.innerHTML = '';
+            if(liste.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400">Kayıtlı ürün bulunamadı.</td></tr>`;
+                return;
+            }
+            let tukenenler = JSON.parse(localStorage.getItem('center_tukenen_urunler')) || [];
+            liste.forEach((u, i) => {
+                const gorsel = u.resim_url ? u.resim_url : 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100&h=100&fit=crop';
+                const isTukendi = tukenenler.includes(u.UrunAd);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-bold text-brandGold">${i + 1}</td>
+                        <td class="p-3"><img src="${gorsel}" class="w-12 h-12 object-cover rounded-lg shadow-sm"></td>
+                        <td class="p-3 font-bold text-brandDark">${u.UrunAd}</td>
+                        <td class="p-3 text-gray-500 text-xs uppercase font-semibold">${u.UrunGrubu || '-'}</td>
+                        <td class="p-3 font-black text-brandGreen">₺${u.FixFiyat || '0.00'}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="stokDurumunuDegistir('${u.UrunAd}')" class="${isTukendi ? 'bg-red-500 text-white' : 'bg-emerald-100 text-emerald-700'} px-3 py-1 rounded-full text-xs font-bold transition-colors">
+                                ${isTukendi ? '❌ Tükendi' : '✔ Stokta'}
+                            </button>
+                        </td>
+                        <td class="p-3 text-center flex items-center justify-center gap-2">
+                            <button onclick="urunDuzenleBaslat(${u.id})" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors shadow-sm"><i class="fa-solid fa-pen"></i> Düzenle</button>
+                            <button onclick="urunSil(${u.id})" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors shadow-sm"><i class="fa-solid fa-trash"></i> Sil</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        function stokDurumunuDegistir(urunAd) {
+            let tukenenler = JSON.parse(localStorage.getItem('center_tukenen_urunler')) || [];
+            const index = tukenenler.indexOf(urunAd);
+            if (index > -1) {
+                tukenenler.splice(index, 1);
+            } else {
+                tukenenler.push(urunAd);
+            }
+            localStorage.setItem('center_tukenen_urunler', JSON.stringify(tukenenler));
+            tabloyuDoldur(adminUrunlerDizisi);
+        }
+        function adminUrunleriFiltrele() {
+            const aramaVal = document.getElementById('admin-urun-arama').value.trim().toLocaleUpperCase('tr-TR');
+            if(!aramaVal) {
+                tabloyuDoldur(adminUrunlerDizisi);
+                return;
+            }
+            const filtrelenmis = adminUrunlerDizisi.filter(u => {
+                const ad = (u.UrunAd || "").toLocaleUpperCase('tr-TR');
+                const indexStr = String(adminUrunlerDizisi.indexOf(u) + 1);
+                const orjSira = String(u.Sira || u.sira || '');
+                return ad.includes(aramaVal) || indexStr === aramaVal || orjSira === aramaVal;
+            });
+            tabloyuDoldur(filtrelenmis);
+        }
+        function urunKaydetVEYAGuncelle() {
+            const id = document.getElementById('input-urun-id').value;
+            if(id) { urunGuncelleIsteği(id); } else { urunKaydet(); }
+        }
+        function urunKaydet() {
+            const ad = document.getElementById('input-urun-ad').value;
+            const fiyat = document.getElementById('input-urun-fiyat').value;
+            let sira = document.getElementById('input-urun-sira').value;
+            if(!sira || sira.trim() === '') sira = adminUrunlerDizisi.length + 1;
+            const aciklama = document.getElementById('input-urun-aciklama').value;
+            const alerjen = document.getElementById('input-urun-alerjen').value;
+            const kalori = document.getElementById('input-urun-kalori').value;
+            const sure = document.getElementById('input-urun-sure').value;
+            const glutensiz = document.getElementById('input-urun-gluten').checked ? 1 : 0;
+            const resimDosyasi = document.getElementById('input-urun-resim').files[0];
+            let anaKategori = document.getElementById('input-urun-kat').value;
+            if (anaKategori === 'YENI') anaKategori = document.getElementById('input-yeni-kat').value;
+            let altKategori = document.getElementById('input-urun-alt-kat').value;
+            if (altKategori === 'YENI') altKategori = document.getElementById('input-yeni-alt-kat').value;
+            const finalKategori = altKategori ? altKategori : anaKategori;
+            if(!ad || !fiyat || !finalKategori) { alert("Lütfen ürün adı, kategori ve fiyat bilgilerini eksiksiz doldurun!"); return; }
+            const formData = new FormData();
+            formData.append('ad', ad); formData.append('kategori', finalKategori); formData.append('fiyat', fiyat); formData.append('sira', sira); formData.append('aciklama', aciklama); formData.append('alerjen', alerjen); formData.append('kalori', kalori); formData.append('sure', sure); formData.append('is_gluten_free', glutensiz);
+            if (resimDosyasi) formData.append('resim', resimDosyasi);
+            fetch('/api/urun-ekle', { method: 'POST', headers: getAuthHeaders(), body: formData })
+            .then(res => res.json()).then(data => { alert(data.mesaj); formuSifirla(); urunleriListele(); }).catch(err => alert("Kayıt sırasında hata!"));
+        }
+        function urunDuzenleBaslat(id) {
+            const u = adminUrunlerDizisi.find(item => item.id == id);
+            if(!u) return;
+            document.getElementById('input-urun-id').value = u.id;
+            document.getElementById('input-urun-ad').value = u.UrunAd || '';
+            document.getElementById('input-urun-fiyat').value = u.FixFiyat || '';
+            document.getElementById('input-urun-sira').value = u.Sira || u.sira || 1;
+            document.getElementById('input-urun-aciklama').value = u.aciklama || '';
+            document.getElementById('input-urun-alerjen').value = u.alerjen || '';
+            document.getElementById('input-urun-kalori').value = u.kalori || '';
+            document.getElementById('input-urun-sure').value = u.sure || '';
+            document.getElementById('input-urun-gluten').checked = (u.is_gluten_free == 1);
+            document.getElementById('input-urun-kat').value = u.UrunGrubu || '';
+            updateAltKategori();
+            document.getElementById('input-urun-alt-kat').value = u.UrunGrubu || '';
+            document.getElementById('form-baslik').textContent = "Ürün Bilgilerini Güncelle (ID: " + u.id + ")";
+            document.getElementById('btn-metin').textContent = "Değişiklikleri Kaydet";
+            document.getElementById('btn-iptal').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function urunGuncelleIsteği(id) {
+            const ad = document.getElementById('input-urun-ad').value;
+            const fiyat = document.getElementById('input-urun-fiyat').value;
+            const sira = document.getElementById('input-urun-sira').value || 1;
+            const aciklama = document.getElementById('input-urun-aciklama').value;
+            const alerjen = document.getElementById('input-urun-alerjen').value;
+            const kalori = document.getElementById('input-urun-kalori').value;
+            const sure = document.getElementById('input-urun-sure').value;
+            const glutensiz = document.getElementById('input-urun-gluten').checked ? 1 : 0;
+            const resimDosyasi = document.getElementById('input-urun-resim').files[0];
+            let anaKategori = document.getElementById('input-urun-kat').value;
+            let altKategori = document.getElementById('input-urun-alt-kat').value;
+            const finalKategori = altKategori ? altKategori : anaKategori;
+            const formData = new FormData();
+            formData.append('ad', ad); formData.append('kategori', finalKategori); formData.append('fiyat', fiyat); formData.append('sira', sira); formData.append('aciklama', aciklama); formData.append('alerjen', alerjen); formData.append('kalori', kalori); formData.append('sure', sure); formData.append('is_gluten_free', glutensiz);
+            if (resimDosyasi) formData.append('resim', resimDosyasi);
+            fetch('/api/urun-guncelle/' + id, { method: 'POST', headers: getAuthHeaders(), body: formData })
+            .then(res => res.json()).then(data => { alert(data.mesaj); formuSifirla(); urunleriListele(); }).catch(err => alert("Güncelleme hatası!"));
+        }
+        function urunSil(id) {
+            if(confirm("Bu ürünü silmek istediğinize emin misiniz?")) {
+                fetch('/api/urun-sil/' + id, { method: 'POST', headers: getAuthHeaders() })
+                .then(res => res.json()).then(data => { alert(data.mesaj); urunleriListele(); }).catch(err => alert("Silme hatası!"));
+            }
+        }
+        function formuSifirla() {
+            document.getElementById('input-urun-id').value = ''; document.getElementById('input-urun-ad').value = ''; document.getElementById('input-urun-fiyat').value = ''; document.getElementById('input-urun-sira').value = ''; document.getElementById('input-urun-aciklama').value = ''; document.getElementById('input-urun-alerjen').value = ''; document.getElementById('input-urun-kalori').value = ''; document.getElementById('input-urun-sure').value = ''; document.getElementById('input-urun-resim').value = ''; document.getElementById('input-urun-gluten').checked = false; document.getElementById('input-urun-kat').value = ''; document.getElementById('input-urun-alt-kat').innerHTML = '<option value="">Önce kategori seçin</option>'; document.getElementById('input-urun-alt-kat').disabled = true;
+            document.getElementById('form-baslik').textContent = "Yeni Yemek / İçecek Ekle"; document.getElementById('btn-metin').textContent = "Ürünü Sisteme Ekle"; document.getElementById('btn-iptal').classList.add('hidden');
+        }
+        function ayarKaydet() {
+            const sirket_adi = document.getElementById('input-sirket-adi').value;
+            const wifi_sifresi = document.getElementById('input-wifi').value;
+            const telefon = document.getElementById('input-telefon').value;
+            const adres = document.getElementById('input-adres').value;
+            const yorum_linki = document.getElementById('input-yorum-link').value;
+            fetch('/api/ayarlar-guncelle', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('center_admin_token') || '', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify({ sirket_adi, wifi_sifresi, telefon, adres, yorum_linki }) })
+            .then(res => res.json()).then(data => alert(data.mesaj)).catch(err => alert("Hata!"));
+        }
+        function switchAdmin(tab) {
+            document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('main > section').forEach(el => el.classList.remove('flex'));
+            document.querySelectorAll('.admin-tab').forEach(el => { el.classList.remove('bg-brandGreen', 'text-white'); el.classList.add('hover:bg-white/5', 'text-gray-300'); });
+            const activeSection = document.getElementById('sec-' + tab);
+            if(activeSection) { activeSection.classList.remove('hidden'); activeSection.classList.add('flex'); }
+            const activeBtn = document.getElementById('btn-' + tab);
+            if(activeBtn) { activeBtn.classList.add('bg-brandGreen', 'text-white'); activeBtn.classList.remove('hover:bg-white/5', 'text-gray-300'); }
+
+            const titles = { 'dashboard': 'Hoş Geldiniz', 'kategoriler': 'Kategori Yönetimi', 'urunler': 'Ürün ve Menü Yönetimi', 'kasa': 'Kasa ve Masa Takibi', 'qrs': 'Masa QR Kodları', 'raporlar': 'Gün Sonu Satış Analizi', 'ayarlar': 'Sistem Ayarları (White-Label)' };
+            document.getElementById('page-title').innerText = titles[tab] || 'Yönetim';
+
+            if(tab === 'raporlar') { raporuGuncelle(); }
+            if(tab === 'qrs') { qrKodlariListele(); }
+            if(tab === 'urunler') { renderAdminNotifications(); }
+        }
+
+        // CANLI MUTFAK / GARSON PANELİ YÖNETİMİ
+        function toggleAdminPanel() {
+            const panel = document.getElementById('admin-live-panel');
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            renderAdminNotifications();
+        }
+
+        function renderAdminNotifications() {
+            const container = document.getElementById('admin-notifications-container');
+            const badgeCount = document.getElementById('admin-bildirim-sayisi');
+            if (!container || !badgeCount) return;
+            
+            container.innerHTML = '';
+
+            let garsonCagrilari = JSON.parse(localStorage.getItem('center_garson_cagrilari')) || [];
+            let gelenSiparisler = JSON.parse(localStorage.getItem('center_gelen_siparisler')) || [];
+
+            const toplamBildirim = garsonCagrilari.length + gelenSiparisler.length;
+            badgeCount.textContent = toplamBildirim;
+
+            if(toplamBildirim === 0) {
+                container.innerHTML = `<div class="py-8 text-center text-gray-400 text-xs font-medium uppercase tracking-wider">Aktif bildirim bulunmuyor.</div>`;
+                return;
+            }
+
+            garsonCagrilari.forEach((cagri, index) => {
+                container.innerHTML += `
+                    <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-xl flex justify-between items-center shadow-sm">
+                        <div>
+                            <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">🔔 Garson Çağrısı</span>
+                            <h5 class="font-bold text-brandDark text-sm">Masa ${cagri.masa}</h5>
+                            <span class="text-[10px] text-gray-500" data-timestamp="${cagri.timestamp || Date.now()}">${cagri.zaman}</span>
+                        </div>
+                        <button onclick="silGarsonCagrisi(${index})" class="bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors">Tamamla</button>
+                    </div>
+                `;
+            });
+
+            gelenSiparisler.forEach((siparis, index) => {
+                let urunListesiHtml = siparis.urunler.map(u => `<li>${u.adet}x ${u.UrunAd}</li>`).join('');
+                let durum = siparis.durum || '1';
+                
+                container.innerHTML += `
+                    <div class="bg-emerald-50 border-l-4 border-brandGreen p-3 rounded-r-xl flex flex-col gap-2 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-bold text-brandGreen uppercase tracking-widest block">🛒 Yeni Sipariş</span>
+                                <h5 class="font-bold text-brandDark text-sm">Masa ${siparis.masa_no}</h5>
+                            </div>
+                            <span class="font-black text-brandGreen text-sm">₺${parseFloat(siparis.toplam_tutar).toFixed(2)}</span>
+                        </div>
+                        <ul class="text-xs text-gray-700 list-disc list-inside bg-white p-2 rounded-lg border border-gray-100">${urunListesiHtml}</ul>
+                        
+                        <!-- DURUM BUTONLARI -->
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="siparisHazirlaniyor(${index})" class="flex-1 ${durum === '2' ? 'bg-brandGold' : 'bg-brandGold/50 hover:bg-brandGold'} text-white py-2 rounded text-xs font-bold transition-colors shadow-sm">Hazırlanıyor</button>
+                            <button onclick="siparisServisEdildi(${index})" class="flex-1 bg-brandGreen hover:bg-brandDark text-white py-2 rounded text-xs font-bold transition-colors shadow-sm">Servis Edildi</button>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-[10px] text-gray-400">${siparis.zaman || 'Az önce'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function silGarsonCagrisi(index) {
+            let list = JSON.parse(localStorage.getItem('center_garson_cagrilari')) || [];
+            
+            if(list[index] && list[index].timestamp) {
+                const cagriZamani = list[index].timestamp;
+                const yanitZamani = Date.now();
+                const farkSaniye = Math.floor((yanitZamani - cagriZamani) / 1000);
+                
+                let loglar = JSON.parse(localStorage.getItem('center_garson_loglari')) || [];
+                loglar.unshift({ 
+                    masa: list[index].masa,
+                    zaman: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+                    sure: farkSaniye
+                });
+                
+                if(loglar.length > 20) loglar = loglar.slice(0, 20);
+                localStorage.setItem('center_garson_loglari', JSON.stringify(loglar));
+            }
+            
+            list.splice(index, 1);
+            localStorage.setItem('center_garson_cagrilari', JSON.stringify(list));
+            renderAdminNotifications();
+            performansLoglariniGuncelle();
+        }
+
+        function siparisHazirlaniyor(index) {
+            let list = JSON.parse(localStorage.getItem('center_gelen_siparisler')) || [];
+            if(list[index]) {
+                list[index].durum = '2';
+                localStorage.setItem('center_gelen_siparisler', JSON.stringify(list));
+                localStorage.setItem('center_siparis_durumu', '2');
+                renderAdminNotifications();
+            }
+        }
+
+        function siparisServisEdildi(index) {
+            let list = JSON.parse(localStorage.getItem('center_gelen_siparisler')) || [];
+            localStorage.setItem('center_siparis_durumu', '3');
+            list.splice(index, 1);
+            localStorage.setItem('center_gelen_siparisler', JSON.stringify(list));
+            renderAdminNotifications();
+        }
+
+        function qrKodlariListele() {
+            const grid = document.getElementById('qr-liste-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            masalar.forEach(masa => {
+                const url = `${window.location.origin}/?masa=${masa.id}`;
+                grid.innerHTML += `
+                    <div class="bg-brandBg border border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-3 shadow-sm">
+                        <div class="flex justify-between items-center w-full">
+                            <span class="font-bold text-brandDark text-base"><i class="fa-solid fa-chair text-brandGreen mr-2"></i>${masa.ad}</span>
+                            <span class="text-xs bg-brandGold/20 text-brandGold font-bold px-2.5 py-1 rounded-full">Aktif QR</span>
+                        </div>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}" alt="QR - ${masa.ad}" class="w-32 h-32 md:w-36 md:h-36 rounded-lg border border-gray-200 bg-white p-1">
+                        <div class="bg-white w-full p-3 rounded-xl border border-gray-200 flex items-center justify-between">
+                            <input type="text" readonly value="${url}" class="text-xs text-gray-600 bg-transparent outline-none w-full select-all font-mono">
+                        </div>
+                        <a href="/?masa=${masa.id}" target="_blank" class="w-full bg-brandGreen text-white text-center py-2 rounded-xl text-xs font-bold hover:bg-brandDark transition-colors">
+                            <i class="fa-solid fa-external-link-alt mr-1"></i> Masaya Git (Test Et)
+                        </a>
+                    </div>
+                `;
+            });
+        }
+
+        // YENİ EKLENEN FİŞ FONKSİYONLARI
+        function openReceiptModal(masa, tutar, tur, zaman) {
+            document.getElementById('receipt-masa').textContent = masa;
+            document.getElementById('receipt-total').textContent = `₺${parseFloat(tutar).toFixed(2)}`;
+            document.getElementById('receipt-type').textContent = tur;
+            
+            let d = new Date();
+            document.getElementById('receipt-date').textContent = `Tarih: ${d.toLocaleDateString('tr-TR')}`;
+            document.getElementById('receipt-time').textContent = `Saat: ${zaman}`;
+
+            const sirket = document.getElementById('input-sirket-adi') ? document.getElementById('input-sirket-adi').value : 'CENTER CAFE';
+            document.getElementById('receipt-title').textContent = sirket || 'CENTER CAFE';
+
+            document.getElementById('receipt-modal').classList.remove('hidden');
+            document.getElementById('receipt-modal').classList.add('flex');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receipt-modal').classList.add('hidden');
+            document.getElementById('receipt-modal').classList.remove('flex');
+        }
+
+        function printReceipt() {
+            const btn = document.querySelector('#receipt-modal button.bg-brandDark');
+            const orj = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yazdırılıyor...';
+            setTimeout(() => {
+                btn.innerHTML = orj;
+                closeReceiptModal();
+            }, 1000);
+        }
+
+        function raporuGuncelle() {
+            let islemler = JSON.parse(localStorage.getItem('center_gunluk_islemler')) || [];
+            const tbody = document.getElementById('rapor-tablosu');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            if(islemler.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">Bugüne ait kapatılan masa veya satış kaydı bulunamadı.</td></tr>`;
+                return;
+            }
+
+            islemler.forEach(item => {
+                const badgeColor = item.tur === 'Nakit' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-3 font-bold text-brandDark">${item.masa}</td>
+                        <td class="p-3"><span class="${badgeColor} text-xs font-bold px-2.5 py-1 rounded-full uppercase">${item.tur}</span></td>
+                        <td class="p-3 text-center font-medium">1 Adet</td>
+                        <td class="p-3 font-black text-brandGreen">₺${item.tutar.toFixed(2)}</td>
+                        <td class="p-3 text-gray-500 text-xs">${item.zaman}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openReceiptModal('${item.masa}', ${item.tutar}, '${item.tur}', '${item.zaman}')" class="bg-gray-200 text-gray-700 hover:bg-brandGold hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                                <i class="fa-solid fa-receipt"></i> Fiş Görüntüle
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        let masalar = JSON.parse(localStorage.getItem('center_masalar')) || [ { id: 1, ad: 'Masa 1', durum: 'bos', tutar: 0 }, { id: 2, ad: 'Masa 2', durum: 'dolu', tutar: 1250 }, { id: 3, ad: 'Masa 3', durum: 'bos', tutar: 0 }, { id: 4, ad: 'Masa 4', durum: 'dolu', tutar: 450 } ];
+        function renderMasalar() {
+            localStorage.setItem('center_masalar', JSON.stringify(masalar));
+            const grid = document.getElementById('masa-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            let doluSayisi = 0; let ciro = 0;
+            masalar.forEach((masa, index) => {
+                if (masa.durum === 'dolu') { doluSayisi++; ciro += masa.tutar; }
+                const bgClass = masa.durum === 'bos' ? 'bg-brandBg border-brandGreen/30 hover:border-brandGreen' : 'bg-amber-50 border-amber-400/50 hover:border-amber-500';
+                const iconColor = masa.durum === 'bos' ? 'text-brandGreen' : 'text-amber-500';
+                const badgeClass = masa.durum === 'bos' ? 'bg-brandGreen' : 'bg-amber-500';
+                const badgeText = masa.durum === 'bos' ? 'Boş' : `Dolu (₺${masa.tutar})`;
+                grid.innerHTML += `
+                    <div class="${bgClass} border-2 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 relative transition-all shadow-sm group">
+                        <button onclick="masaSil(${index})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-trash text-xs"></i></button>
+                        <div class="cursor-pointer flex flex-col items-center gap-2 w-full" onclick="masaDurumDegistir(${index})">
+                            <i class="fa-solid fa-chair text-2xl ${iconColor}"></i>
+                            <span class="font-bold text-brandDark text-sm text-center line-clamp-1">${masa.ad}</span>
+                            <span class="${badgeClass} text-white text-[0.6rem] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">${badgeText}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            const statToplam = document.getElementById('stat-toplam-masa'); const statDolu = document.getElementById('stat-dolu-masa'); const statCiro = document.getElementById('stat-ciro');
+            if(statToplam) statToplam.textContent = masalar.length; if(statDolu) statDolu.textContent = doluSayisi; if(statCiro) statCiro.textContent = `₺${ciro.toLocaleString('tr-TR')}`;
+        }
+        function masaDurumDegistir(index) {
+            const masa = masalar[index];
+            if (masa.durum === 'bos') {
+                const tutar = prompt(`${masa.ad} müşterilere açılacak. Adisyon başlangıç veya bitiş tutarını girin (₺):`, "0");
+                if (tutar !== null) { masa.durum = 'dolu'; masa.tutar = parseFloat(tutar) || 0; renderMasalar(); }
+            } else {
+                const odemeTuru = prompt(`${masa.ad} hesabı kapatılıyor. Lütfen ödeme türünü girin:\n1 -> Nakit\n2 -> Kredi Kartı`, "1");
+                if (odemeTuru !== null) {
+                    const turMetni = (odemeTuru === '2') ? 'Kredi Kartı' : 'Nakit';
+                    if (confirm(`${masa.ad} için ₺${masa.tutar} tutarındaki hesap ${turMetni} olarak kapatılıp masa boş işaretlensin mi?`)) {
+                        let gunlukIslemler = JSON.parse(localStorage.getItem('center_gunluk_islemler')) || [];
+                        gunlukIslemler.push({ masa: masa.ad, tutar: masa.tutar, tur: turMetni, zaman: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) });
+                        localStorage.setItem('center_gunluk_islemler', JSON.stringify(gunlukIslemler));
+                        masa.durum = 'bos'; masa.tutar = 0; renderMasalar();
+                    }
+                }
+            }
+        }
+        function masaEkleModalAc() { const ad = prompt("Eklenecek yeni masanın adını veya numarasını girin (Örn: Bahçe 1):"); if (ad && ad.trim() !== '') { masalar.push({ id: Date.now(), ad: ad, durum: 'bos', tutar: 0 }); renderMasalar(); } }
+        function masaSil(index) { if(confirm("Bu masayı sistemden silmek istediğinize emin misiniz?")) { masalar.splice(index, 1); renderMasalar(); } }
+        function gunSonuAl() {
+            if(confirm("DİKKAT: Tüm masalar boşaltılacak, açık adisyonlar kapatılacak ve bugünkü ciro sıfırlanacaktır. (Menüdeki ürünleriniz SİLİNMEZ). Bu işlem geri alınamaz. Emin misiniz?")) {
+                masalar.forEach(m => { m.durum = 'bos'; m.tutar = 0; });
+                localStorage.setItem('center_masalar', JSON.stringify(masalar));
+                localStorage.setItem('center_garson_cagrilari', JSON.stringify([]));
+                localStorage.setItem('center_gunluk_islemler', JSON.stringify([]));
+                localStorage.setItem('center_garson_loglari', JSON.stringify([])); // Logları da temizle
+                renderMasalar();
+                performansLoglariniGuncelle();
+                raporuGuncelle();
+                alert("Gün sonu başarıyla alındı. Masalar, kasa ve ödeme kayıtları yarına hazır!");
+            }
+        }
+        function garsonCagrilariniDinle() {
+            setInterval(() => {
+                renderAdminNotifications();
+                let cagrilar = JSON.parse(localStorage.getItem('center_garson_cagrilari')) || [];
+                if (cagrilar.length > 0) {
+                    const container = document.getElementById('admin-toast-container');
+                    if(container) {
+                        cagrilar.forEach(cagri => {
+                            const toast = document.createElement('div');
+                            toast.className = 'bg-amber-500 text-white px-6 py-4 rounded-xl shadow-2xl font-bold text-sm flex items-center gap-3 transform transition-all duration-500 translate-x-full';
+                            toast.innerHTML = `<i class="fa-solid fa-bell-concierge text-xl animate-bounce"></i> Masa ${cagri.masa} Garson Bekliyor! <span class="text-xs opacity-75 font-normal ml-2">(${cagri.zaman})</span>`;
+                            container.appendChild(toast);
+                            setTimeout(() => toast.classList.remove('translate-x-full'), 50);
+                            setTimeout(() => { toast.classList.add('translate-x-full'); setTimeout(() => toast.remove(), 500); }, 5000);
+                        });
+                    }
+                }
+            }, 3000);
+        }
+
+        function performansLoglariniGuncelle() {
+            const listContainer = document.getElementById('log-listesi');
+            const avgContainer = document.getElementById('stat-yanit-suresi');
+            if(!listContainer || !avgContainer) return;
+
+            let loglar = JSON.parse(localStorage.getItem('center_garson_loglari')) || [];
+            
+            if(loglar.length === 0) {
+                listContainer.innerHTML = '<span class="text-sm text-gray-400 italic">Henüz kaydedilen çağrı yok.</span>';
+                avgContainer.textContent = "Veri Yok";
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            let toplamSure = 0;
+
+            loglar.forEach(log => {
+                toplamSure += log.sure;
+                let sureMetni = log.sure < 60 ? `${log.sure} Saniye` : `${Math.floor(log.sure/60)} Dk ${log.sure%60} Sn`;
+                let renk = log.sure < 30 ? 'text-brandGreen' : (log.sure < 60 ? 'text-amber-500' : 'text-red-500');
+                
+                listContainer.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-brandDark text-sm">Masa ${log.masa}</span>
+                            <span class="text-xs text-gray-500">${log.zaman}</span>
+                        </div>
+                        <span class="font-black ${renk} text-sm">${sureMetni}</span>
+                    </div>
+                `;
+            });
+
+            let ortalama = Math.floor(toplamSure / loglar.length);
+            avgContainer.textContent = ortalama < 60 ? `${ortalama} Saniye` : `${Math.floor(ortalama/60)} Dk ${ortalama%60} Sn`;
+            if (ortalama > 60) avgContainer.className = "text-3xl font-black text-red-500";
+            else avgContainer.className = "text-3xl font-black text-brandGreen";
+        }
+    </script>
+</body>
+</html>
