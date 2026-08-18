@@ -3,7 +3,7 @@
 // 1. Veritabanından Ürünleri Getirme (GET) İşlemi
 async function dbdenUrunleriGetir() {
     try {
-        const response = await fetch('/qrmenu_sepet/get_urunler.php');
+        const response = await fetch('/get_urunler.php');
         const sonuc = await response.json();
         
         if (sonuc.status === 'success') {
@@ -21,7 +21,7 @@ async function dbdenUrunleriGetir() {
 // 2. Veritabanına Yeni Ürün Ekleme (POST) İşlemi
 async function dbyeUrunEkle(yeniUrunVerisi) {
     try {
-        const response = await fetch('/qrmenu_sepet/add_urun.php', {
+       const response = await fetch('/add_urun.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
