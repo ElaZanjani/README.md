@@ -387,7 +387,7 @@
                     <span id="receipt-total">₺0.00</span>
                 </div>
                 <div class="flex justify-between items-center text-xs mb-4 font-bold text-gray-500 uppercase tracking-widest">
-                    <span>Ödeme Türü:</span>
+                    <span>Ödeme Tür:</span>
                     <span id="receipt-type">Nakit</span>
                 </div>
                 
@@ -404,6 +404,9 @@
             </button>
         </div>
     </div>
+
+    <!-- YENİ EKLENEN VERİTABANI KÖPRÜSÜ -->
+    <script src="js/api.js"></script>
 
     <script>
         function checkLoginState() {
@@ -516,16 +519,14 @@
             if (altKat === 'YENI') yeniAltKatWrapper.classList.remove('hidden');
             else yeniAltKatWrapper.classList.add('hidden');
         }
-        function urunleriListele() {
-            fetch('/api/menu', { headers: getAuthHeaders() })
-            .then(res => res.json())
-            .then(data => {
-                if(data && data.urunler) {
-                    adminUrunlerDizisi = data.urunler;
-                    tabloyuDoldur(adminUrunlerDizisi);
-                }
-            });
+
+        async function urunleriListele() {
+            // Veritabanından (api.js üzerinden) güncel ürünleri çekiyoruz
+            const urunler = await dbdenUrunleriGetir();
+            adminUrunlerDizisi = urunler;
+            tabloyuDoldur(adminUrunlerDizisi);
         }
+
         function tabloyuDoldur(liste) {
             const tbody = document.getElementById('admin-urun-listesi');
             tbody.innerHTML = '';
@@ -586,7 +587,8 @@
             const id = document.getElementById('input-urun-id').value;
             if(id) { urunGuncelleIsteği(id); } else { urunKaydet(); }
         }
-        function urunKaydet() {
+
+        async function urunKaydet() {
             const ad = document.getElementById('input-urun-ad').value;
             const fiyat = document.getElementById('input-urun-fiyat').value;
             let sira = document.getElementById('input-urun-sira').value;
@@ -596,19 +598,41 @@
             const kalori = document.getElementById('input-urun-kalori').value;
             const sure = document.getElementById('input-urun-sure').value;
             const glutensiz = document.getElementById('input-urun-gluten').checked ? 1 : 0;
-            const resimDosyasi = document.getElementById('input-urun-resim').files[0];
+            
             let anaKategori = document.getElementById('input-urun-kat').value;
             if (anaKategori === 'YENI') anaKategori = document.getElementById('input-yeni-kat').value;
             let altKategori = document.getElementById('input-urun-alt-kat').value;
             if (altKategori === 'YENI') altKategori = document.getElementById('input-yeni-alt-kat').value;
             const finalKategori = altKategori ? altKategori : anaKategori;
-            if(!ad || !fiyat || !finalKategori) { alert("Lütfen ürün adı, kategori ve fiyat bilgilerini eksiksiz doldurun!"); return; }
-            const formData = new FormData();
-            formData.append('ad', ad); formData.append('kategori', finalKategori); formData.append('fiyat', fiyat); formData.append('sira', sira); formData.append('aciklama', aciklama); formData.append('alerjen', alerjen); formData.append('kalori', kalori); formData.append('sure', sure); formData.append('is_gluten_free', glutensiz);
-            if (resimDosyasi) formData.append('resim', resimDosyasi);
-            fetch('/api/urun-ekle', { method: 'POST', headers: getAuthHeaders(), body: formData })
-            .then(res => res.json()).then(data => { alert(data.mesaj); formuSifirla(); urunleriListele(); }).catch(err => alert("Kayıt sırasında hata!"));
+            
+            if(!ad || !fiyat || !finalKategori) { 
+                alert("Lütfen ürün adı, kategori ve fiyat bilgilerini eksiksiz doldurun!"); 
+                return; 
+            }
+
+            // Verileri api.js'ye uygun JSON objesi haline getiriyoruz
+            const yeniUrun = {
+                UrunAd: ad,
+                UrunGrubu: finalKategori,
+                FixFiyat: fiyat,
+                aciklama: aciklama,
+                alerjen: alerjen,
+                kalori: kalori,
+                is_gluten_free: glutensiz
+            };
+            
+            // api.js'deki fonksiyonu çağırıp veritabanına kaydediyoruz
+            const sonuc = await dbyeUrunEkle(yeniUrun);
+            
+            if(sonuc.status === 'success') {
+                alert(sonuc.message);
+                formuSifirla();
+                urunleriListele(); // Tabloyu anında güncelle
+            } else {
+                alert("Hata: " + sonuc.message);
+            }
         }
+
         function urunDuzenleBaslat(id) {
             const u = adminUrunlerDizisi.find(item => item.id == id);
             if(!u) return;
