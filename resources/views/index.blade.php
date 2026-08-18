@@ -535,12 +535,14 @@
                 anaKatAlani.appendChild(div);
             });
 
-            // YENİ: Veritabanından gelen /get_urunler.php adresine bağlanıyoruz
+            // GARANTİLİ VERİTABANI BAĞLANTI KODU
             fetch('/get_urunler.php')
                 .then(res => res.json())
                 .then(data => {
                     if(data && data.status === 'success' && data.data) {
                         globalUrunler = data.data.sort((a, b) => (a.Sira || 99) - (b.Sira || 99));
+                    } else if(Array.isArray(data)) {
+                        globalUrunler = data.sort((a, b) => (a.Sira || 99) - (b.Sira || 99));
                     }
 
                     const btnler = anaKatAlani.querySelectorAll('.ana-kat-btn');
