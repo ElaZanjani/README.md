@@ -562,7 +562,7 @@
                         const anaUpper = isim.toLocaleUpperCase('tr-TR');
 
                         if (altUpper === anaUpper) {
-                            return altlar.map(a => a.toLocaleUpperCase('tr-TR')).includes(g) || g === anaUpper;
+                            return g === anaUpper;
                         } else {
                             return g === altUpper;
                         }
@@ -598,8 +598,7 @@
 
                     let katMatch = false;
                     if (altUpper === anaUpper) {
-                        const altlar = altHiyerarsi[ana] || [ana];
-                        katMatch = altlar.map(a => a.toLocaleUpperCase('tr-TR')).includes(g) || g === anaUpper;
+                        katMatch = (g === anaUpper);
                     } else {
                         katMatch = (g === altUpper);
                     }
