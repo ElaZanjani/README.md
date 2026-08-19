@@ -693,15 +693,15 @@
                 if(tukenenler.includes(urun.UrunAd)) return;
 
                 const existingItem = sepet.find(item => item.UrunAd === urun.UrunAd);
-<<<<<<< HEAD
+
                 if(existingItem) { existingItem.adet += 1; } else { sepet.push({ ...urun, adet: 1 }); }
-=======
+
                 if(existingItem) {
                     existingItem.adet += 1;
                 } else {
                     sepet.push({ ...urun, adet: 1 });
                 }
->>>>>>> 91e4d8f9b46df1cfb9e71794f6b8049b072fc44d
+
                 
                 localStorage.setItem('center_sepet', JSON.stringify(sepet));
                 updateCartIcon();
