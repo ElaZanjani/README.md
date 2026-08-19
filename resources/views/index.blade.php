@@ -629,13 +629,9 @@
                 filtrelenenler.sort((a, b) => {
                     let siparisSayisiA = istatistik[a.UrunAd] || 0;
                     let siparisSayisiB = istatistik[b.UrunAd] || 0;
-<<<<<<< HEAD
-                    if (siparisSayisiB !== siparisSayisiA) return siparisSayisiB - siparisSayisiA;
-=======
                     if (siparisSayisiB !== siparisSayisiA) {
                         return siparisSayisiB - siparisSayisiA; 
                     }
->>>>>>> 91e4d8f9b46df1cfb9e71794f6b8049b072fc44d
                     return (a.Sira || 99) - (b.Sira || 99);
                 });
 
