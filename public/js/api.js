@@ -1,16 +1,17 @@
-// api.js - Frontend ile Backend (Veritabanı) arasındaki iletişimi sağlayan köprü dosya
+// api.js - Frontend ile Backend arasındaki köprü
 
 // 1. Veritabanından Ürünleri Getirme (GET) İşlemi
 async function dbdenUrunleriGetir() {
     try {
-        const response = await fetch('/get_urunler.php');
+        const response = await fetch('/api/menu');
         const sonuc = await response.json();
         
-        if (sonuc.status === 'success') {
-            return sonuc.data; // Ürün listesini döndür
+        if (sonuc.urunler) {
+            return sonuc.urunler; 
+        } else if (Array.isArray(sonuc)) {
+            return sonuc;
         } else {
-            console.error('Ürünler çekilirken hata oluştu:', sonuc.message);
-            return []; // Hata varsa boş liste döndür ki sistem çökmesin
+            return [];
         }
     } catch (hata) {
         console.error('API Bağlantı Hatası:', hata);
@@ -18,22 +19,25 @@ async function dbdenUrunleriGetir() {
     }
 }
 
-// 2. Veritabanına Yeni Ürün Ekleme (POST) İşlemi
-async function dbyeUrunEkle(yeniUrunVerisi) {
+// 2. Veritabanına Yeni Ürün Ekleme (POST) İşlemi (CSRF Token Destekli)
+async function dbyeUrunEkle(formDataVerisi) {
     try {
-       const response = await fetch('/add_urun.php', {
+        // Laravel'in sayfadan CSRF token'ını alıyoruz
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        const response = await fetch('/api/urun-ekle', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'X-CSRF-TOKEN': csrfToken // Laravel'in 419 hatasını engelleyen güvenlik anahtarı
             },
-            body: JSON.stringify(yeniUrunVerisi) // JavaScript objesini JSON formata çevirip PHP'ye yolluyoruz
+            body: formDataVerisi 
         });
         
         const sonuc = await response.json();
-        return sonuc; // Başarı veya hata durumunu (status, message) döndür
+        return sonuc; 
         
     } catch (hata) {
         console.error('Ürün ekleme isteği başarısız:', hata);
-        return { status: 'error', message: 'Sunucuya ulaşılamadı. Lütfen internet bağlantınızı kontrol edin.' };
+        return { status: 'error', message: 'Sunucuya ulaşılamadı. Lütfen bağlantınızı kontrol edin.' };
     }
 }

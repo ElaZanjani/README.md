@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#047857">
 
     <script>
         tailwind.config = {
@@ -153,22 +155,17 @@
             <span id="tracker-table" class="text-xs font-black text-brandGreen bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">Masa -</span>
         </div>
         <div class="relative flex items-center justify-between mt-2 px-2">
-            <!-- Arka Plan Çizgisi -->
             <div class="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-1.5 bg-gray-100 rounded-full z-0"></div>
-            <!-- İlerleme Çizgisi -->
             <div id="tracker-progress" class="absolute left-6 top-1/2 -translate-y-1/2 h-1.5 bg-brandGreen rounded-full z-0 transition-all duration-700 ease-out" style="width: 0%;"></div>
 
-            <!-- Adım 1 -->
             <div class="relative z-10 flex flex-col items-center gap-2">
                 <div id="step-1-icon" class="w-8 h-8 rounded-full bg-brandGreen text-white flex items-center justify-center text-sm shadow-md transition-all duration-300 transform scale-110"><i class="fa-solid fa-check"></i></div>
                 <span class="text-[10px] font-extrabold text-brandGreen uppercase tracking-wider">İletildi</span>
             </div>
-            <!-- Adım 2 -->
             <div class="relative z-10 flex flex-col items-center gap-2">
                 <div id="step-2-icon" class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-sm transition-all duration-700 shadow-sm"><i class="fa-solid fa-fire"></i></div>
                 <span id="step-2-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider transition-colors duration-700">Hazırlanıyor</span>
             </div>
-            <!-- Adım 3 -->
             <div class="relative z-10 flex flex-col items-center gap-2">
                 <div id="step-3-icon" class="w-8 h-8 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-sm transition-all duration-700 shadow-sm"><i class="fa-solid fa-bell-concierge"></i></div>
                 <span id="step-3-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider transition-colors duration-700">Serviste</span>
@@ -227,7 +224,7 @@
 
     <!-- Sepet Özeti & Masa Seçim Modal -->
     <div id="cart-modal" class="fixed inset-0 z-[300] bg-brandDark/70 hidden items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-sm">
-        <div class="slide-up bg-white w-full md:max-w-md overflow-hidden shadow-2xl relative flex flex-col rounded-t-[2rem] md:rounded-[2rem] max-h-[90vh] md:max-h-[85vh]">
+        <div class="slide-up bg-white w-full md:max-w-xl overflow-hidden shadow-2xl relative flex flex-col rounded-t-[2rem] md:rounded-[2rem] max-h-[90vh]">
             <div class="p-6 border-b border-brandBlue/10 flex justify-between items-center bg-brandBg">
                 <h3 class="text-xl font-bold text-brandDark uppercase tracking-wide"><i class="fa-solid fa-basket-shopping text-brandGold mr-2"></i> Sepetim</h3>
                 <button onclick="closeCartModal()" class="text-gray-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -238,9 +235,7 @@
                 <input type="text" id="cart-table-input" placeholder="Masa No (Örn: 1)" class="w-32 bg-white border border-gray-300 rounded-lg px-3 py-1.5 font-black text-center text-brandDark text-sm focus:outline-none focus:border-brandGreen">
             </div>
 
-            <div id="cart-items-container" class="p-6 overflow-y-auto hide-scroll flex-1 flex flex-col gap-4 bg-white min-h-[220px]">
-                <!-- Ürünler buraya yüklenecek -->
-            </div>
+            <div id="cart-items-container" class="p-6 overflow-y-auto hide-scroll flex-1 flex flex-col gap-4 bg-white min-h-[220px]"></div>
             <div class="p-6 bg-brandBg border-t border-brandBlue/10 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
                 <div class="flex justify-between items-center mb-4">
                     <span class="font-bold text-gray-500 uppercase tracking-widest text-sm">Genel Toplam:</span>
@@ -279,7 +274,6 @@
     </div>
 
     <script>
-        // ORTAK TOAST FONKSİYONU
         function showToast(message, icon = 'fa-check-circle', color = 'text-brandGold') {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').innerHTML = `<i class="fa-solid ${icon} ${color} mr-1"></i> ${message}`;
@@ -344,8 +338,6 @@
             });
             
             updateCartIcon();
-            
-            // Eğer daha önceden verilmiş aktif bir sipariş varsa, takip çubuğunu canlandır
             checkOrderStatus();
             setInterval(checkOrderStatus, 2000);
         });
@@ -358,7 +350,6 @@
             document.getElementById('nav-menu').className = tabId === 'menu' ? 'text-brandGreen border-b-2 border-brandGreen pb-1 transition-all' : 'text-brandBlue hover:text-brandGreen border-b-2 border-transparent hover:border-brandGreen pb-1 transition-all';
         }
 
-        // --- GARSON ÇAĞIRMA (Modal & Timestamp) ---
         function openWaiterModal() {
             document.getElementById('waiter-modal').classList.remove('hidden');
             document.getElementById('waiter-modal').classList.add('flex');
@@ -381,14 +372,12 @@
             cagriListesi.push({
                 masa: tableNo,
                 zaman: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-                timestamp: Date.now() // ADMIN PERFORMANS LOGLAMASI İÇİN EKLENDİ
+                timestamp: Date.now()
             });
             localStorage.setItem('center_garson_cagrilari', JSON.stringify(cagriListesi));
-
             showToast(`Masa ${tableNo} için garson çağırıldı!`);
         }
 
-        // --- AKILLI FİLTRELEME & FAVORİLER ---
         let currentAnaKat = '';
         let currentAltKat = '';
         let activeFilters = { maxFiyat: 0, glutensiz: false, alerjensiz: false };
@@ -523,7 +512,7 @@
                 "SICAK İÇECEKLER": ["SICAK İÇECEKLER", "DÜNYA KAHVELERİ", "BİTKİ ÇAYI", "İLAVELER"],
                 "SOĞUK İÇECEKLER": ["SOĞUK İÇECEKLER", "SOĞUK KAHVELER", "MEŞRUBATLAR", "FROZEN", "SMOOTHIE", "MILKSHAKE", "FRAPPE", "KOKTEYL & DETOX"],
                 "DONDURMALAR": ["DONDURMALAR"],
-                "GÖZLEME & TOST": ["GÖZLEME & TOST", "GÖZLEMELER", "TOSTLAR", "KÖYLUM (BAZLAMA) TOSTLAR", "KÖY EKMEĞİ TOSTLAR", "APERATİFLER"]
+                "GÖZLEME & TOST": ["GÖZLEME & TOST", "GÖZLEMELER", "TOSTLAR", "KÖYLÜM (BAZLAMA) TOSTLAR", "KÖY EKMEĞİ TOSTLAR", "APERATİFLER"]
             };
 
             const anaKatAlani = document.getElementById('ana-kategoriler');
@@ -600,10 +589,9 @@
                 let favs = JSON.parse(localStorage.getItem('center_favoriler')) || [];
 
                 const filtrelenenler = globalUrunler.filter(u => {
-                    // Favori filtresi aktifse ve ürün favorilerde yoksa gizle
                     if(sadeceFavoriler && !favs.includes(u.UrunAd)) return false;
-
                     if(!u.UrunGrubu) return false;
+                    
                     const g = u.UrunGrubu.toLocaleUpperCase('tr-TR');
                     const altUpper = alt.toLocaleUpperCase('tr-TR');
                     const anaUpper = ana.toLocaleUpperCase('tr-TR');
@@ -631,15 +619,11 @@
                     return true;
                 });
 
-                // --- ÇOK SATANLARI ÜSTE ALMA ALGORİTMASI ---
                 let istatistik = JSON.parse(localStorage.getItem('center_siparis_istatistikleri')) || {};
                 filtrelenenler.sort((a, b) => {
                     let siparisSayisiA = istatistik[a.UrunAd] || 0;
                     let siparisSayisiB = istatistik[b.UrunAd] || 0;
-                    
-                    if (siparisSayisiB !== siparisSayisiA) {
-                        return siparisSayisiB - siparisSayisiA; 
-                    }
+                    if (siparisSayisiB !== siparisSayisiA) return siparisSayisiB - siparisSayisiA;
                     return (a.Sira || 99) - (b.Sira || 99);
                 });
 
@@ -661,7 +645,6 @@
 
                     const badge = (u.is_gluten_free == 1) ? `<span class="absolute top-3 left-3 bg-brandGreen text-white text-[0.6rem] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-md z-10 border border-brandGreen/50">GF</span>` : '';
                     const tukendiBadge = isTukendi ? `<div class="absolute inset-0 bg-black/60 flex items-center justify-center z-20"><span class="bg-red-600 text-white font-bold text-xs px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">Tükendi</span></div>` : '';
-                    
                     const favBtn = `<button onclick="toggleFavori(event, ${globalIndex})" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-lg z-20 transition-all hover:scale-110 ${isFav ? 'text-red-500' : 'text-gray-300 hover:text-red-400'}"><i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i></button>`;
 
                     urunGrid.innerHTML += `
@@ -687,26 +670,18 @@
                 });
             }
 
-            // --- GELİŞMİŞ SEPET SİSTEMİ ---
             window.sepet = JSON.parse(localStorage.getItem('center_sepet')) || [];
-            
             window.sepet.forEach(item => { if (!item.adet || isNaN(item.adet)) item.adet = 1; });
             localStorage.setItem('center_sepet', JSON.stringify(window.sepet));
             
             window.sepeteEkle = function(e, index) {
                 if(e) e.stopPropagation();
                 const urun = globalUrunler[index];
-                
                 let tukenenler = JSON.parse(localStorage.getItem('center_tukenen_urunler')) || [];
                 if(tukenenler.includes(urun.UrunAd)) return;
 
                 const existingItem = sepet.find(item => item.UrunAd === urun.UrunAd);
-
-                if(existingItem) {
-                    existingItem.adet += 1;
-                } else {
-                    sepet.push({ ...urun, adet: 1 });
-                }
+                if(existingItem) { existingItem.adet += 1; } else { sepet.push({ ...urun, adet: 1 }); }
                 
                 localStorage.setItem('center_sepet', JSON.stringify(sepet));
                 updateCartIcon();
@@ -716,9 +691,7 @@
             window.updateCartIcon = function() {
                 const cartBtn = document.getElementById('cart-floating-btn');
                 const cartCount = document.getElementById('cart-count');
-                
                 const totalItems = sepet.reduce((sum, item) => sum + (item.adet || 1), 0);
-                
                 if(totalItems > 0) {
                     cartBtn.classList.remove('hidden');
                     cartCount.textContent = totalItems;
@@ -731,7 +704,6 @@
                 renderCart();
                 const aktifMasa = localStorage.getItem('aktif_masa') || '';
                 document.getElementById('cart-table-input').value = aktifMasa;
-
                 document.getElementById('cart-modal').classList.remove('hidden');
                 document.getElementById('cart-modal').classList.add('flex');
             }
@@ -743,9 +715,7 @@
 
             window.updateCartItem = function(index, change) {
                 sepet[index].adet += change;
-                if(sepet[index].adet <= 0) {
-                    sepet.splice(index, 1);
-                }
+                if(sepet[index].adet <= 0) { sepet.splice(index, 1); }
                 localStorage.setItem('center_sepet', JSON.stringify(sepet));
                 updateCartIcon();
                 renderCart();
@@ -790,7 +760,6 @@
             }
         });
 
-        // --- BACKEND'E SİPARİŞİ İLETME VE TAKİP ÇUBUĞUNU BAŞLATMA ---
         window.siparisVer = function() {
             if(sepet.length === 0) return;
 
@@ -799,7 +768,6 @@
             localStorage.setItem('aktif_masa', masaNo);
 
             const toplamTutar = sepet.reduce((sum, item) => sum + (parseFloat(item.FixFiyat || 0) * item.adet), 0);
-
             const btn = document.getElementById('btn-siparis-ver');
             const orjinalIcerik = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> İletiliyor...';
@@ -807,45 +775,30 @@
 
             fetch('/api/siparis-ver', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    masa_no: masaNo,
-                    urunler: sepet,
-                    toplam_tutar: toplamTutar
-                })
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ masa_no: masaNo, urunler: sepet, toplam_tutar: toplamTutar })
             })
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
                     let gelenSiparisler = JSON.parse(localStorage.getItem('center_gelen_siparisler')) || [];
-                    gelenSiparisler.push({
-                        masa_no: masaNo,
-                        urunler: [...sepet],
-                        toplam_tutar: toplamTutar,
-                        zaman: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-                    });
+                    gelenSiparisler.push({ masa_no: masaNo, urunler: [...sepet], toplam_tutar: toplamTutar, zaman: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) });
                     localStorage.setItem('center_gelen_siparisler', JSON.stringify(gelenSiparisler));
                     
-                    // --- EN ÇOK SATANLAR İSTATİSTİĞİNİ GÜNCELLE ---
                     let istatistik = JSON.parse(localStorage.getItem('center_siparis_istatistikleri')) || {};
                     sepet.forEach(item => {
                         if(!istatistik[item.UrunAd]) istatistik[item.UrunAd] = 0;
-                        istatistik[item.UrunAd] += item.adet; // Sipariş edilen adet kadar artır
+                        istatistik[item.UrunAd] += item.adet;
                     });
                     localStorage.setItem('center_siparis_istatistikleri', JSON.stringify(istatistik));
 
-                    // Takip Çubuğunu Başlat
-                    localStorage.setItem('center_siparis_durumu', '1'); // 1: Alındı
+                    localStorage.setItem('center_siparis_durumu', '1');
                     checkOrderStatus();
 
                     sepet = [];
                     localStorage.setItem('center_sepet', JSON.stringify(sepet));
                     updateCartIcon();
                     closeCartModal();
-                    
                     showToast("Siparişiniz mutfağa iletildi!");
                 } else {
                     alert('Sipariş iletilemedi: ' + (data.message || 'Bilinmeyen Hata'));
@@ -861,15 +814,11 @@
             });
         }
 
-        // --- SİPARİŞ DURUM TAKİP MANTIĞI (GARANTİLİ YAPI) ---
         function checkOrderStatus() {
             const durum = localStorage.getItem('center_siparis_durumu');
             const tracker = document.getElementById('order-tracker');
             
-            if(!durum) {
-                tracker.classList.add('hidden');
-                return;
-            }
+            if(!durum) { tracker.classList.add('hidden'); return; }
             
             tracker.classList.remove('hidden');
             const masaNo = localStorage.getItem('aktif_masa') || '-';
@@ -879,26 +828,23 @@
             const s2i = document.getElementById('step-2-icon'); const s2t = document.getElementById('step-2-text');
             const s3i = document.getElementById('step-3-icon'); const s3t = document.getElementById('step-3-text');
 
-            // Önce her şeyi başlangıç (1. Adım - İletildi) durumuna sıfırla
             progress.style.width = '0%';
             s2i.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-sm transition-all duration-700 bg-gray-200 text-gray-400";
             s2t.className = "text-[10px] font-bold uppercase tracking-wider transition-colors duration-700 text-gray-400";
             s3i.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-sm transition-all duration-700 bg-gray-200 text-gray-400";
             s3t.className = "text-[10px] font-bold uppercase tracking-wider transition-colors duration-700 text-gray-400";
 
-            // Duruma göre ilgili adımları renklendir
-            if (durum === '2') { // ADMİN HAZIRLANIYOR DEDİ
+            if (durum === '2') {
                 progress.style.width = '50%';
                 s2i.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-md transition-all duration-300 transform scale-110 bg-brandGold text-white";
                 s2t.className = "text-[10px] font-extrabold uppercase tracking-wider transition-colors duration-700 text-brandGold";
-            } else if (durum === '3') { // ADMİN SERVİS EDİLDİ DEDİ
+            } else if (durum === '3') {
                 progress.style.width = '100%';
                 s2i.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-sm transition-all duration-700 bg-brandGold text-white";
                 s2t.className = "text-[10px] font-bold uppercase tracking-wider transition-colors duration-700 text-brandGold";
                 s3i.className = "w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-md transition-all duration-300 transform scale-110 bg-brandGreen text-white";
                 s3t.className = "text-[10px] font-extrabold uppercase tracking-wider transition-colors duration-700 text-brandGreen";
                 
-                // Servis edildikten 5 saniye sonra ekrandan kaybolur
                 setTimeout(() => {
                     if(localStorage.getItem('center_siparis_durumu') === '3') {
                         tracker.classList.add('hidden');

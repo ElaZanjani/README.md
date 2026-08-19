@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin Panel | Yönetim Merkezi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -149,7 +150,7 @@
                         </div>
 
                         <div class="relative">
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ana Kategori</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kategori (Ana Kategori)</label>
                             <select id="input-urun-kat" onchange="updateAltKategori()" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-brandGreen focus:outline-none">
                                 <option value="">Seçiniz...</option>
                                 <option value="KAHVALTILAR">KAHVALTILAR</option>
@@ -158,21 +159,11 @@
                                 <option value="SOĞUK İÇECEKLER">SOĞUK İÇECEKLER</option>
                                 <option value="DONDURMALAR">DONDURMALAR</option>
                                 <option value="GÖZLEME & TOST">GÖZLEME & TOST</option>
-                                <option value="YENI" class="font-bold text-brandGreen">+ YENİ KATEGORİ EKLE</option>
                             </select>
-                            <div id="wrapper-yeni-kat" class="hidden mt-2">
-                                <input type="text" id="input-yeni-kat" class="w-full bg-white border border-brandGreen rounded-lg px-3 py-2 text-sm placeholder-brandGreen/50" placeholder="Yeni kategori ad...">
-                            </div>
                         </div>
 
-                        <div class="relative">
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Alt Kategori</label>
-                            <select id="input-urun-alt-kat" onchange="checkYeniAltKategori()" disabled class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:border-brandGreen focus:outline-none">
-                                <option value="">Önce kategori seçin</option>
-                            </select>
-                            <div id="wrapper-yeni-alt-kat" class="hidden mt-2">
-                                <input type="text" id="input-yeni-alt-kat" class="w-full bg-white border border-brandGreen rounded-lg px-3 py-2 text-sm placeholder-brandGreen/50" placeholder="Yeni alt kategori ad...">
-                            </div>
+                        <div class="relative hidden">
+                            <select id="input-urun-alt-kat"><option value=""></option></select>
                         </div>
 
                         <div>
@@ -405,7 +396,7 @@
         </div>
     </div>
 
-    <!-- YENİ EKLENEN VERİTABANI KÖPRÜSÜ -->
+    <!-- VERİTABANI KÖPRÜSÜ -->
     <script src="js/api.js"></script>
 
     <script>
@@ -450,14 +441,7 @@
             garsonCagrilariniDinle();
         });
         let adminUrunlerDizisi = [];
-        const kategoriHiyerarsisi = {
-            "KAHVALTILAR": ["KAHVALTILAR", "SAHANDA", "OMLET", "KENDİ KAHVALTINI YARAT"],
-            "TATLILAR": ["TATLILAR", "SÜTLÜ TATLI", "PASTALAR", "ŞERBETLİ TATLI", "KİLOLUK ÜRÜNLER", "KEKLER", "İLAVELER"],
-            "SICAK İÇECEKLER": ["SICAK İÇECEKLER", "DÜNYA KAHVELERİ", "BİTKİ ÇAYI", "İLAVELER"],
-            "SOĞUK İÇECEKLER": ["SOĞUK İÇECEKLER", "SOĞUK KAHVELER", "MEŞRUBATLAR", "FROZEN", "SMOOTHİE", "MILKSHAKE", "FRAPPE", "KOKTEYL & DETOX"],
-            "DONDURMALAR": ["DONDURMALAR"],
-            "GÖZLEME & TOST": ["GÖZLEME & TOST", "GÖZLEMELER", "TOSTLAR", "KÖYLÜM (BAZLAMA) TOSTLAR", "KÖY EKMEĞİ TOSTLAR", "APERATİFLER"]
-        };
+        
         function getAuthHeaders() {
             return {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -483,45 +467,13 @@
             });
         }
         function updateAltKategori() {
-            const anaKat = document.getElementById('input-urun-kat').value;
+            // Alt kategorileri tamamen devre disi birakip direkt ana kategoriyi kaydediyoruz ki kafa karisikligi ve yigilma olmasin.
             const altKatSelect = document.getElementById('input-urun-alt-kat');
-            const yeniKatWrapper = document.getElementById('wrapper-yeni-kat');
-            const yeniAltKatWrapper = document.getElementById('wrapper-yeni-alt-kat');
-            altKatSelect.innerHTML = '';
-            yeniAltKatWrapper.classList.add('hidden');
-            if (anaKat === 'YENI') {
-                yeniKatWrapper.classList.remove('hidden');
-                altKatSelect.disabled = true;
-                altKatSelect.innerHTML = '<option value="">Önce ana kategori adını belirleyin</option>';
-            } else if (anaKat && kategoriHiyerarsisi[anaKat]) {
-                yeniKatWrapper.classList.add('hidden');
-                altKatSelect.disabled = false;
-                kategoriHiyerarsisi[anaKat].forEach(alt => {
-                    const option = document.createElement('option');
-                    option.value = alt;
-                    option.textContent = alt;
-                    altKatSelect.appendChild(option);
-                });
-                const yeniAltOption = document.createElement('option');
-                yeniAltOption.value = 'YENI';
-                yeniAltOption.className = 'font-bold text-brandGreen';
-                yeniAltOption.textContent = '+ YENİ ALT KATEGORİ EKLE';
-                altKatSelect.appendChild(yeniAltOption);
-            } else {
-                yeniKatWrapper.classList.add('hidden');
-                altKatSelect.disabled = true;
-                altKatSelect.innerHTML = '<option value="">Önce kategori seçin</option>';
-            }
+            altKatSelect.innerHTML = '<option value="">Ana Kategori Yeterli</option>';
         }
-        function checkYeniAltKategori() {
-            const altKat = document.getElementById('input-urun-alt-kat').value;
-            const yeniAltKatWrapper = document.getElementById('wrapper-yeni-alt-kat');
-            if (altKat === 'YENI') yeniAltKatWrapper.classList.remove('hidden');
-            else yeniAltKatWrapper.classList.add('hidden');
-        }
+        function checkYeniAltKategori() {}
 
         async function urunleriListele() {
-            // Veritabanından (api.js üzerinden) güncel ürünleri çekiyoruz
             const urunler = await dbdenUrunleriGetir();
             adminUrunlerDizisi = urunler;
             tabloyuDoldur(adminUrunlerDizisi);
@@ -598,38 +550,37 @@
             const kalori = document.getElementById('input-urun-kalori').value;
             const sure = document.getElementById('input-urun-sure').value;
             const glutensiz = document.getElementById('input-urun-gluten').checked ? 1 : 0;
+            const resimDosyasi = document.getElementById('input-urun-resim').files[0];
             
-            let anaKategori = document.getElementById('input-urun-kat').value;
-            if (anaKategori === 'YENI') anaKategori = document.getElementById('input-yeni-kat').value;
-            let altKategori = document.getElementById('input-urun-alt-kat').value;
-            if (altKategori === 'YENI') altKategori = document.getElementById('input-yeni-alt-kat').value;
-            const finalKategori = altKategori ? altKategori : anaKategori;
+            const anaKategori = document.getElementById('input-urun-kat').value;
             
-            if(!ad || !fiyat || !finalKategori) { 
+            if(!ad || !fiyat || !anaKategori) { 
                 alert("Lütfen ürün adı, kategori ve fiyat bilgilerini eksiksiz doldurun!"); 
                 return; 
             }
 
-            // Verileri api.js'ye uygun JSON objesi haline getiriyoruz
-            const yeniUrun = {
-                UrunAd: ad,
-                UrunGrubu: finalKategori,
-                FixFiyat: fiyat,
-                aciklama: aciklama,
-                alerjen: alerjen,
-                kalori: kalori,
-                is_gluten_free: glutensiz
-            };
+            const formData = new FormData();
+            formData.append('ad', ad);
+            formData.append('kategori', anaKategori); // Sadece ana kategori kaydediliyor
+            formData.append('fiyat', fiyat);
+            formData.append('sira', sira);
+            formData.append('aciklama', aciklama);
+            formData.append('alerjen', alerjen);
+            formData.append('kalori', kalori);
+            formData.append('sure', sure);
+            formData.append('is_gluten_free', glutensiz);
+            if (resimDosyasi) {
+                formData.append('resim', resimDosyasi);
+            }
+
+            const sonuc = await dbyeUrunEkle(formData);
             
-            // api.js'deki fonksiyonu çağırıp veritabanına kaydediyoruz
-            const sonuc = await dbyeUrunEkle(yeniUrun);
-            
-            if(sonuc.status === 'success') {
-                alert(sonuc.message);
+            if(sonuc.status === 'success' || sonuc.durum === 'basarili') {
+                alert(sonuc.message || sonuc.mesaj || "Ürün başarıyla eklendi!");
                 formuSifirla();
-                urunleriListele(); // Tabloyu anında güncelle
+                urunleriListele(); 
             } else {
-                alert("Hata: " + sonuc.message);
+                alert("Hata: " + (sonuc.message || sonuc.mesaj || "İşlem başarısız"));
             }
         }
 
@@ -646,8 +597,6 @@
             document.getElementById('input-urun-sure').value = u.sure || '';
             document.getElementById('input-urun-gluten').checked = (u.is_gluten_free == 1);
             document.getElementById('input-urun-kat').value = u.UrunGrubu || '';
-            updateAltKategori();
-            document.getElementById('input-urun-alt-kat').value = u.UrunGrubu || '';
             document.getElementById('form-baslik').textContent = "Ürün Bilgilerini Güncelle (ID: " + u.id + ")";
             document.getElementById('btn-metin').textContent = "Değişiklikleri Kaydet";
             document.getElementById('btn-iptal').classList.remove('hidden');
@@ -663,12 +612,20 @@
             const sure = document.getElementById('input-urun-sure').value;
             const glutensiz = document.getElementById('input-urun-gluten').checked ? 1 : 0;
             const resimDosyasi = document.getElementById('input-urun-resim').files[0];
-            let anaKategori = document.getElementById('input-urun-kat').value;
-            let altKategori = document.getElementById('input-urun-alt-kat').value;
-            const finalKategori = altKategori ? altKategori : anaKategori;
+            const anaKategori = document.getElementById('input-urun-kat').value;
+            
             const formData = new FormData();
-            formData.append('ad', ad); formData.append('kategori', finalKategori); formData.append('fiyat', fiyat); formData.append('sira', sira); formData.append('aciklama', aciklama); formData.append('alerjen', alerjen); formData.append('kalori', kalori); formData.append('sure', sure); formData.append('is_gluten_free', glutensiz);
+            formData.append('ad', ad); 
+            formData.append('kategori', anaKategori); 
+            formData.append('fiyat', fiyat); 
+            formData.append('sira', sira); 
+            formData.append('aciklama', aciklama); 
+            formData.append('alerjen', alerjen); 
+            formData.append('kalori', kalori); 
+            formData.append('sure', sure); 
+            formData.append('is_gluten_free', glutensiz);
             if (resimDosyasi) formData.append('resim', resimDosyasi);
+            
             fetch('/api/urun-guncelle/' + id, { method: 'POST', headers: getAuthHeaders(), body: formData })
             .then(res => res.json()).then(data => { alert(data.mesaj); formuSifirla(); urunleriListele(); }).catch(err => alert("Güncelleme hatası!"));
         }
@@ -679,7 +636,7 @@
             }
         }
         function formuSifirla() {
-            document.getElementById('input-urun-id').value = ''; document.getElementById('input-urun-ad').value = ''; document.getElementById('input-urun-fiyat').value = ''; document.getElementById('input-urun-sira').value = ''; document.getElementById('input-urun-aciklama').value = ''; document.getElementById('input-urun-alerjen').value = ''; document.getElementById('input-urun-kalori').value = ''; document.getElementById('input-urun-sure').value = ''; document.getElementById('input-urun-resim').value = ''; document.getElementById('input-urun-gluten').checked = false; document.getElementById('input-urun-kat').value = ''; document.getElementById('input-urun-alt-kat').innerHTML = '<option value="">Önce kategori seçin</option>'; document.getElementById('input-urun-alt-kat').disabled = true;
+            document.getElementById('input-urun-id').value = ''; document.getElementById('input-urun-ad').value = ''; document.getElementById('input-urun-fiyat').value = ''; document.getElementById('input-urun-sira').value = ''; document.getElementById('input-urun-aciklama').value = ''; document.getElementById('input-urun-alerjen').value = ''; document.getElementById('input-urun-kalori').value = ''; document.getElementById('input-urun-sure').value = ''; document.getElementById('input-urun-resim').value = ''; document.getElementById('input-urun-gluten').checked = false; document.getElementById('input-urun-kat').value = '';
             document.getElementById('form-baslik').textContent = "Yeni Yemek / İçecek Ekle"; document.getElementById('btn-metin').textContent = "Ürünü Sisteme Ekle"; document.getElementById('btn-iptal').classList.add('hidden');
         }
         function ayarKaydet() {
@@ -844,7 +801,6 @@
             });
         }
 
-        // YENİ EKLENEN FİŞ FONKSİYONLARI
         function openReceiptModal(masa, tutar, tur, zaman) {
             document.getElementById('receipt-masa').textContent = masa;
             document.getElementById('receipt-total').textContent = `₺${parseFloat(tutar).toFixed(2)}`;
@@ -959,7 +915,7 @@
                 localStorage.setItem('center_masalar', JSON.stringify(masalar));
                 localStorage.setItem('center_garson_cagrilari', JSON.stringify([]));
                 localStorage.setItem('center_gunluk_islemler', JSON.stringify([]));
-                localStorage.setItem('center_garson_loglari', JSON.stringify([])); // Logları da temizle
+                localStorage.setItem('center_garson_loglari', JSON.stringify([]));
                 renderMasalar();
                 performansLoglariniGuncelle();
                 raporuGuncelle();
