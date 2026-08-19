@@ -533,24 +533,18 @@
                 anaKatAlani.appendChild(div);
             });
 
-            // GARANTİLİ VERİTABANI BAĞLANTI KODU
-            fetch('/get_urunler.php')
-                .then(res => res.json())
-                .then(data => {
-                    if(data && data.status === 'success' && data.data) {
-                        globalUrunler = data.data.sort((a, b) => (a.Sira || 99) - (b.Sira || 99));
-                    } else if(Array.isArray(data)) {
-                        globalUrunler = data.sort((a, b) => (a.Sira || 99) - (b.Sira || 99));
-                    }
+            fetch('/api/menu').then(res => res.json()).then(data => {
+                if(data && data.urunler) {
+                    globalUrunler = data.urunler.sort((a, b) => (a.Sira || 99) - (b.Sira || 99));
+                }
 
-                    const btnler = anaKatAlani.querySelectorAll('.ana-kat-btn');
-                    btnler.forEach((btn, idx) => {
-                        btn.onclick = () => selectCategory(sabitKategoriler[idx].ad, btn);
-                    });
+                const btnler = anaKatAlani.querySelectorAll('.ana-kat-btn');
+                btnler.forEach((btn, idx) => {
+                    btn.onclick = () => selectCategory(sabitKategoriler[idx].ad, btn);
+                });
 
-                    if(btnler.length > 0) selectCategory(sabitKategoriler[0].ad, btnler[0]);
-                })
-                .catch(err => console.error("Ürünler veritabanından çekilemedi:", err));
+                if(btnler.length > 0) selectCategory(sabitKategoriler[0].ad, btnler[0]);
+            });
 
             function selectCategory(isim, btn) {
                 currentAnaKat = isim;
@@ -629,9 +623,7 @@
                 filtrelenenler.sort((a, b) => {
                     let siparisSayisiA = istatistik[a.UrunAd] || 0;
                     let siparisSayisiB = istatistik[b.UrunAd] || 0;
-                    if (siparisSayisiB !== siparisSayisiA) {
-                        return siparisSayisiB - siparisSayisiA; 
-                    }
+                    if (siparisSayisiB !== siparisSayisiA) return siparisSayisiB - siparisSayisiA;
                     return (a.Sira || 99) - (b.Sira || 99);
                 });
 
@@ -689,15 +681,7 @@
                 if(tukenenler.includes(urun.UrunAd)) return;
 
                 const existingItem = sepet.find(item => item.UrunAd === urun.UrunAd);
-
                 if(existingItem) { existingItem.adet += 1; } else { sepet.push({ ...urun, adet: 1 }); }
-
-                if(existingItem) {
-                    existingItem.adet += 1;
-                } else {
-                    sepet.push({ ...urun, adet: 1 });
-                }
-
                 
                 localStorage.setItem('center_sepet', JSON.stringify(sepet));
                 updateCartIcon();
@@ -789,33 +773,45 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> İletiliyor...';
             btn.disabled = true;
 
-            let gelenSiparisler = JSON.parse(localStorage.getItem('center_gelen_siparisler')) || [];
-            gelenSiparisler.push({
-                masa_no: masaNo,
-                urunler: [...sepet],
-                toplam_tutar: toplamTutar,
-                zaman: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+            fetch('/api/siparis-ver', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ masa_no: masaNo, urunler: sepet, toplam_tutar: toplamTutar })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    let gelenSiparisler = JSON.parse(localStorage.getItem('center_gelen_siparisler')) || [];
+                    gelenSiparisler.push({ masa_no: masaNo, urunler: [...sepet], toplam_tutar: toplamTutar, zaman: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) });
+                    localStorage.setItem('center_gelen_siparisler', JSON.stringify(gelenSiparisler));
+                    
+                    let istatistik = JSON.parse(localStorage.getItem('center_siparis_istatistikleri')) || {};
+                    sepet.forEach(item => {
+                        if(!istatistik[item.UrunAd]) istatistik[item.UrunAd] = 0;
+                        istatistik[item.UrunAd] += item.adet;
+                    });
+                    localStorage.setItem('center_siparis_istatistikleri', JSON.stringify(istatistik));
+
+                    localStorage.setItem('center_siparis_durumu', '1');
+                    checkOrderStatus();
+
+                    sepet = [];
+                    localStorage.setItem('center_sepet', JSON.stringify(sepet));
+                    updateCartIcon();
+                    closeCartModal();
+                    showToast("Siparişiniz mutfağa iletildi!");
+                } else {
+                    alert('Sipariş iletilemedi: ' + (data.message || 'Bilinmeyen Hata'));
+                }
+            })
+            .catch(err => {
+                console.error("Sipariş Hatası:", err);
+                alert('Sistemde bir bağlantı hatası oluştu.');
+            })
+            .finally(() => {
+                btn.innerHTML = orjinalIcerik;
+                btn.disabled = false;
             });
-            localStorage.setItem('center_gelen_siparisler', JSON.stringify(gelenSiparisler));
-
-            let istatistik = JSON.parse(localStorage.getItem('center_siparis_istatistikleri')) || {};
-            sepet.forEach(item => {
-                if(!istatistik[item.UrunAd]) istatistik[item.UrunAd] = 0;
-                istatistik[item.UrunAd] += item.adet;
-            });
-            localStorage.setItem('center_siparis_istatistikleri', JSON.stringify(istatistik));
-
-            localStorage.setItem('center_siparis_durumu', '1');
-            checkOrderStatus();
-
-            sepet = [];
-            localStorage.setItem('center_sepet', JSON.stringify(sepet));
-            updateCartIcon();
-            closeCartModal();
-            showToast("Siparişiniz mutfağa iletildi!");
-            
-            btn.innerHTML = orjinalIcerik;
-            btn.disabled = false;
         }
 
         function checkOrderStatus() {
